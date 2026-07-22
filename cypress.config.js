@@ -16,6 +16,15 @@ module.exports = defineConfig({
   video: false,
   screenshotOnRunFailure: true,
 
+  reporter: "cypress-mochawesome-reporter",
+  reporterOptions: {
+    reportDir: "cypress/reports",
+    overwrite: false,
+    html: true,
+    json: true,
+    charts: true,
+  },
+
   e2e: {
     baseUrl: "https://front.serverest.dev",
     specPattern: "cypress/e2e/**/*.cy.js",
@@ -24,6 +33,7 @@ module.exports = defineConfig({
       apiUrl: "https://serverest.dev",
     },
     setupNodeEvents(on, config) {
+      require("cypress-mochawesome-reporter/plugin")(on);
       on("task", {
         log(message) {
           console.log(message);
