@@ -61,6 +61,34 @@ Cypress.Commands.add("apiCriarCarrinho", (token, produtos) => {
     });
 });
 
+Cypress.Commands.add("apiCriarUsuarioELogar", (usuario) => {
+  return cy.apiCriarUsuario(usuario).then(() => cy.apiLogin(usuario.email, usuario.password));
+});
+
+Cypress.Commands.add("apiCancelarCompra", (token) => {
+  return cy.request({
+    method: "DELETE",
+    url: `${apiUrl}/carrinhos/cancelar-compra`,
+    headers: { Authorization: token },
+  });
+});
+
+Cypress.Commands.add("apiPrimeiroProdutoId", () => {
+  return cy.request("GET", `${apiUrl}/produtos`).its("body.produtos.0._id");
+});
+
+Cypress.Commands.add("apiExcluirUsuario", (idUsuario) => {
+  return cy.request("DELETE", `${apiUrl}/usuarios/${idUsuario}`);
+});
+
+Cypress.Commands.add("apiExcluirProduto", (idProduto, token) => {
+  return cy.request({
+    method: "DELETE",
+    url: `${apiUrl}/produtos/${idProduto}`,
+    headers: { Authorization: token },
+  });
+});
+
 Cypress.Commands.add("preencherLogin", (email, password) => {
   cy.visit("/login");
   cy.get(loginSelectors.input.email).type(email);

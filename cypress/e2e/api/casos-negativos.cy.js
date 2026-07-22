@@ -55,7 +55,7 @@ describe("API - Casos negativos", () => {
         expect(response.body.message).to.eq("Este email já está sendo usado");
       });
 
-      cy.request("DELETE", `${apiUrl}/usuarios/${primeiraResp.body._id}`);
+      cy.apiExcluirUsuario(primeiraResp.body._id);
     });
   });
 
@@ -89,43 +89,35 @@ describe("API - Casos negativos", () => {
         expect(response.body.message).to.eq("Este email já está sendo usado");
       });
 
-      cy.request("DELETE", `${apiUrl}/usuarios/${respB.body._id}`);
+      cy.apiExcluirUsuario(respB.body._id);
     });
   });
 
   it("não deve excluir um usuário com carrinho cadastrado (DELETE /usuarios/{id})", () => {
     const usuario = gerarUsuario();
-    cy.apiCriarUsuario(usuario);
 
-    cy.apiLogin(usuario.email, usuario.password).then((token) => {
-      cy.request("GET", `${apiUrl}/produtos`)
-        .its("body.produtos.0._id")
-        .then((idProduto) => {
-          cy.apiCriarCarrinho(token, [{ idProduto, quantidade: 1 }]).then(() => {
-            cy.request("GET", `${apiUrl}/usuarios?email=${usuario.email}`)
-              .its("body.usuarios.0._id")
-              .then((idUsuario) => {
-                cy.request({
-                  method: "DELETE",
-                  url: `${apiUrl}/usuarios/${idUsuario}`,
-                  failOnStatusCode: false,
-                }).then((response) => {
-                  expect(response.status).to.eq(400);
-                  expect(response.body.message).to.eq(
-                    "Não é permitido excluir usuário com carrinho cadastrado"
-                  );
-                });
-
-                // Limpeza: cancela o carrinho e então exclui o usuário
-                cy.request({
-                  method: "DELETE",
-                  url: `${apiUrl}/carrinhos/cancelar-compra`,
-                  headers: { Authorization: token },
-                });
-                cy.request("DELETE", `${apiUrl}/usuarios/${idUsuario}`);
+    cy.apiCriarUsuarioELogar(usuario).then((token) => {
+      cy.apiPrimeiroProdutoId().then((idProduto) => {
+        cy.apiCriarCarrinho(token, [{ idProduto, quantidade: 1 }]).then(() => {
+          cy.request("GET", `${apiUrl}/usuarios?email=${usuario.email}`)
+            .its("body.usuarios.0._id")
+            .then((idUsuario) => {
+              cy.request({
+                method: "DELETE",
+                url: `${apiUrl}/usuarios/${idUsuario}`,
+                failOnStatusCode: false,
+              }).then((response) => {
+                expect(response.status).to.eq(400);
+                expect(response.body.message).to.eq(
+                  "Não é permitido excluir usuário com carrinho cadastrado"
+                );
               });
-          });
+
+              cy.apiCancelarCompra(token);
+              cy.apiExcluirUsuario(idUsuario);
+            });
         });
+      });
     });
   });
 
@@ -163,9 +155,8 @@ describe("API - Casos negativos", () => {
 
   it("não deve permitir criar produto para usuário autenticado que não é administrador (POST /produtos)", () => {
     const usuarioComum = gerarUsuario({ administrador: "false" });
-    cy.apiCriarUsuario(usuarioComum);
 
-    cy.apiLogin(usuarioComum.email, usuarioComum.password).then((token) => {
+    cy.apiCriarUsuarioELogar(usuarioComum).then((token) => {
       cy.request({
         method: "POST",
         url: `${apiUrl}/produtos`,
@@ -181,9 +172,8 @@ describe("API - Casos negativos", () => {
 
   it("não deve permitir cadastrar produto com nome já utilizado (POST /produtos)", () => {
     const admin = gerarUsuario({ administrador: "true" });
-    cy.apiCriarUsuario(admin);
 
-    cy.apiLogin(admin.email, admin.password).then((token) => {
+    cy.apiCriarUsuarioELogar(admin).then((token) => {
       const produto = gerarProduto();
 
       cy.apiCriarProduto(produto, token).then((criacao) => {
@@ -198,20 +188,15 @@ describe("API - Casos negativos", () => {
           expect(response.body.message).to.eq("Já existe produto com esse nome");
         });
 
-        cy.request({
-          method: "DELETE",
-          url: `${apiUrl}/produtos/${criacao.body._id}`,
-          headers: { Authorization: token },
-        });
+        cy.apiExcluirProduto(criacao.body._id, token);
       });
     });
   });
 
   it("não deve excluir um produto que faz parte de um carrinho (DELETE /produtos/{id})", () => {
     const admin = gerarUsuario({ administrador: "true" });
-    cy.apiCriarUsuario(admin);
 
-    cy.apiLogin(admin.email, admin.password).then((token) => {
+    cy.apiCriarUsuarioELogar(admin).then((token) => {
       cy.apiCriarProduto(gerarProduto(), token).then((criacao) => {
         cy.apiCriarCarrinho(token, [{ idProduto: criacao.body._id, quantidade: 1 }]).then(() => {
           cy.request({
@@ -226,17 +211,8 @@ describe("API - Casos negativos", () => {
             );
           });
 
-          // Limpeza: cancela o carrinho (devolve estoque) e então exclui o produto
-          cy.request({
-            method: "DELETE",
-            url: `${apiUrl}/carrinhos/cancelar-compra`,
-            headers: { Authorization: token },
-          });
-          cy.request({
-            method: "DELETE",
-            url: `${apiUrl}/produtos/${criacao.body._id}`,
-            headers: { Authorization: token },
-          });
+          cy.apiCancelarCompra(token);
+          cy.apiExcluirProduto(criacao.body._id, token);
         });
       });
     });
@@ -255,39 +231,31 @@ describe("API - Casos negativos", () => {
 
   it("não deve permitir mais de um carrinho por usuário (POST /carrinhos)", () => {
     const usuario = gerarUsuario();
-    cy.apiCriarUsuario(usuario);
 
-    cy.apiLogin(usuario.email, usuario.password).then((token) => {
-      cy.request("GET", `${apiUrl}/produtos`)
-        .its("body.produtos.0._id")
-        .then((idProduto) => {
-          cy.apiCriarCarrinho(token, [{ idProduto, quantidade: 1 }]).then(() => {
-            cy.request({
-              method: "POST",
-              url: `${apiUrl}/carrinhos`,
-              headers: { Authorization: token },
-              body: { produtos: [{ idProduto, quantidade: 1 }] },
-              failOnStatusCode: false,
-            }).then((response) => {
-              expect(response.status).to.eq(400);
-              expect(response.body.message).to.eq("Não é permitido ter mais de 1 carrinho");
-            });
-
-            cy.request({
-              method: "DELETE",
-              url: `${apiUrl}/carrinhos/cancelar-compra`,
-              headers: { Authorization: token },
-            });
+    cy.apiCriarUsuarioELogar(usuario).then((token) => {
+      cy.apiPrimeiroProdutoId().then((idProduto) => {
+        cy.apiCriarCarrinho(token, [{ idProduto, quantidade: 1 }]).then(() => {
+          cy.request({
+            method: "POST",
+            url: `${apiUrl}/carrinhos`,
+            headers: { Authorization: token },
+            body: { produtos: [{ idProduto, quantidade: 1 }] },
+            failOnStatusCode: false,
+          }).then((response) => {
+            expect(response.status).to.eq(400);
+            expect(response.body.message).to.eq("Não é permitido ter mais de 1 carrinho");
           });
+
+          cy.apiCancelarCompra(token);
         });
+      });
     });
   });
 
   it("não deve cadastrar carrinho com produto inexistente (POST /carrinhos)", () => {
     const usuario = gerarUsuario();
-    cy.apiCriarUsuario(usuario);
 
-    cy.apiLogin(usuario.email, usuario.password).then((token) => {
+    cy.apiCriarUsuarioELogar(usuario).then((token) => {
       cy.request({
         method: "POST",
         url: `${apiUrl}/carrinhos`,
