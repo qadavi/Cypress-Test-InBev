@@ -13,17 +13,19 @@ describe("Jornada do usuário normal", () => {
     cy.contains(/Cadastro realizado com sucesso/i).should("be.visible");
     cy.location("pathname").should("eq", "/home");
 
-    cy.pesquisarProduto("Logitech");
-    cy.get(home.card.produto)
-      .should("have.length", 1)
-      .first()
-      .within(() => {
+    // Produto real via API em vez de nome fixo: catálogo compartilhado pode mudar
+    cy.request(`${Cypress.env("apiUrl")}/produtos`).then(({ body }) => {
+      const produtoBusca = body.produtos[0];
+
+      cy.pesquisarProduto(produtoBusca.nome);
+      cy.contains(home.card.produto, produtoBusca.nome).within(() => {
         cy.get(home.button.adicionarNaLista).click();
       });
 
-    cy.get(home.link.listaDeCompras).click();
-    cy.location("pathname").should("eq", "/minhaListaDeProdutos");
-    cy.get(lista.product.nome).should("contain.text", "Logitech");
+      cy.get(home.link.listaDeCompras).click();
+      cy.location("pathname").should("eq", "/minhaListaDeProdutos");
+      cy.get(lista.product.nome).should("contain.text", produtoBusca.nome);
+    });
 
     cy.get(home.link.logout).click();
     cy.location("pathname").should("eq", "/login");
