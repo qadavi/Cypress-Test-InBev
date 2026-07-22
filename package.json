@@ -1,0 +1,18 @@
+{
+  "name": "cypress-serverest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suite de testes E2E (front.serverest.dev) e API (serverest.dev) com Cypress",
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test:e2e": "cypress run --spec \"cypress/e2e/ui/**/*.cy.js\"",
+    "test:api": "cypress run --spec \"cypress/e2e/api/**/*.cy.js\"",
+    "test:all": "cypress run",
+    "test:chrome": "cypress run --browser chrome"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.0.0",
+    "cypress": "^13.15.0"
+  }
+}
