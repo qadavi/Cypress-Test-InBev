@@ -3,8 +3,6 @@ import { faker } from "@faker-js/faker";
 
 const apiUrl = Cypress.env("apiUrl");
 
-// Fluxo contínuo de um administrador via API: cadastro, login, e o CRUD
-// completo de produto que só ele pode fazer.
 describe("API - Jornada do administrador", () => {
   it("cadastra como admin, cadastra um produto, confere, edita, exclui, e por fim exclui a própria conta", () => {
     const admin = gerarUsuario({ administrador: "true" });
@@ -18,13 +16,11 @@ describe("API - Jornada do administrador", () => {
     let token;
     let idProduto;
 
-    // POST /usuarios - cadastro do admin
     cy.request("POST", `${apiUrl}/usuarios`, admin).then((resp) => {
       expect(resp.status).to.eq(201);
       idAdmin = resp.body._id;
     });
 
-    // POST /login
     cy.then(() => {
       cy.request("POST", `${apiUrl}/login`, {
         email: admin.email,
@@ -35,7 +31,6 @@ describe("API - Jornada do administrador", () => {
       });
     });
 
-    // POST /produtos - cadastra o produto
     cy.then(() => {
       cy.request({
         method: "POST",
@@ -49,7 +44,6 @@ describe("API - Jornada do administrador", () => {
       });
     });
 
-    // GET /produtos/{id} - confere o produto recém-criado
     cy.then(() => {
       cy.request("GET", `${apiUrl}/produtos/${idProduto}`).then((resp) => {
         expect(resp.status).to.eq(200);
@@ -57,7 +51,6 @@ describe("API - Jornada do administrador", () => {
       });
     });
 
-    // PUT /produtos/{id} - edita o produto
     cy.then(() => {
       const produtoEditado = { ...produto, nome: `${produto.nome} (editado)`, preco: produto.preco + 1 };
 
@@ -72,7 +65,6 @@ describe("API - Jornada do administrador", () => {
       });
     });
 
-    // DELETE /produtos/{id} - exclui o produto
     cy.then(() => {
       cy.request({
         method: "DELETE",
@@ -84,7 +76,6 @@ describe("API - Jornada do administrador", () => {
       });
     });
 
-    // DELETE /usuarios/{id} - encerra a conta do admin
     cy.then(() => {
       cy.request("DELETE", `${apiUrl}/usuarios/${idAdmin}`).then((resp) => {
         expect(resp.status).to.eq(200);
