@@ -13,9 +13,6 @@ function gerarProduto(overrides = {}) {
   };
 }
 
-// Casos alternativos/negativos da API: cada teste é atômico (uma
-// condição, uma asserção), mesmo espírito de cypress/e2e/ui/casos-negativos.cy.js -
-// os fluxos de "caminho feliz" já ficam nas jornadas de usuário/admin.
 describe("API - Casos negativos", () => {
   it("não deve autenticar com senha incorreta e deve retornar 401 (POST /login)", () => {
     const usuario = gerarUsuario();

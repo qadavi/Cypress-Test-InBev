@@ -1,16 +1,9 @@
 import { gerarUsuario } from "../../support/dataGenerator";
 import { cadastroUsuarioSelectors as cadastroSel } from "../../selectors/cadastroUsuario.selectors";
 
-// Casos alternativos/negativos: cada teste é atômico (uma condição, uma
-// asserção), diferente dos arquivos "jornada-*" que encadeiam vários
-// passos de um fluxo real - inclui tanto negativos de login/acesso quanto
-// de cadastro, para não diluir o propósito de cada arquivo.
 describe("Casos alternativos e negativos", () => {
   it("não deve cadastrar com um e-mail já utilizado", () => {
     const usuario = gerarUsuario();
-    // App Action: setup de estado via API (mais rápido/estável que
-    // repetir a UI) - a interação sob teste aqui é o formulário, não
-    // a criação prévia do usuário duplicado.
     cy.apiCriarUsuario(usuario);
     cy.preencherCadastro(usuario);
 
@@ -21,7 +14,6 @@ describe("Casos alternativos e negativos", () => {
     cy.visit("/cadastrarusuarios");
     cy.get(cadastroSel.button.cadastrar).click();
 
-    // O formulário não deve navegar para outra rota sem os dados obrigatórios
     cy.location("pathname").should("eq", "/cadastrarusuarios");
   });
 
@@ -40,10 +32,8 @@ describe("Casos alternativos e negativos", () => {
     cy.location("pathname").should("eq", "/login");
   });
 
+  // A UI não esconde /admin/* de usuários comuns; só a API bloqueia a ação
   it("usuário comum consegue abrir a tela de administração, mas a API bloqueia a ação exclusiva de admin", () => {
-    // A navegação /admin/* não é escondida por papel no front (qualquer
-    // usuário autenticado acessa a tela), mas o back-end rejeita a ação
-    // com uma mensagem clara - comportamento confirmado manualmente.
     const usuario = gerarUsuario();
     cy.apiCriarUsuario(usuario);
 

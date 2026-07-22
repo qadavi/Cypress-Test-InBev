@@ -1,8 +1,3 @@
-/**
- * Seletores da página /minhaListaDeProdutos (nav: "Lista de Compras")
- * Etapa intermediária do fluxo de compra no site atual: os produtos
- * ficam aqui antes de serem enviados para o carrinho.
- */
 export const listaComprasSelectors = {
   product: {
     nome: '[data-testid="shopping-cart-product-name"]',
@@ -11,6 +6,6 @@ export const listaComprasSelectors = {
   button: {
     aumentarQuantidade: '[data-testid="product-increase-quantity"]',
     diminuirQuantidade: '[data-testid="product-decrease-quantity"]',
-    adicionarCarrinho: '[data-testid="adicionar carrinho"]', // testid tem espaço mesmo, confirmado no DOM
+    adicionarCarrinho: '[data-testid="adicionar carrinho"]', // espaço no testid é assim mesmo no DOM
   },
 };

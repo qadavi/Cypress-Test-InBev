@@ -2,17 +2,12 @@ import { gerarUsuario } from "../../support/dataGenerator";
 import { homeSelectors as home } from "../../selectors/home.selectors";
 import { adminSelectors as admin } from "../../selectors/admin.selectors";
 
-// Jornada exclusiva do administrador: usuários com administrador:"true"
-// caem em uma área própria (/admin/*), com CRUD de produtos/usuários -
-// bem mais rica que a jornada do usuário comum.
 describe("Jornada do administrador", () => {
   it("loga como administrador, cadastra um produto, confirma na listagem, o exclui e desloga", () => {
     const admUsuario = gerarUsuario({ administrador: "true" });
     cy.apiCriarUsuario(admUsuario);
 
     cy.preencherLogin(admUsuario.email, admUsuario.password);
-
-    // Administrador é redirecionado para uma área distinta da Home comum
     cy.location("pathname").should("eq", "/admin/home");
 
     const nomeProduto = `Produto Cypress ${Date.now()}`;
@@ -25,11 +20,9 @@ describe("Jornada do administrador", () => {
       quantidade: "5",
     });
 
-    // Cadastro redireciona para a listagem, onde o produto deve aparecer
     cy.location("pathname").should("eq", "/admin/listarprodutos");
     cy.contains("tr", nomeProduto).should("be.visible");
 
-    // Exclui o produto recém-criado e confirma que ele some da listagem
     cy.excluirProdutoAdmin(nomeProduto);
 
     cy.get(admin.nav.logout).click();
@@ -37,10 +30,6 @@ describe("Jornada do administrador", () => {
   });
 
   it("cadastra dois produtos e exclui um; o usuário normal confirma o catálogo coerente ao pesquisar", () => {
-    // Jornada começa e é conduzida pelo admin (cadastro/exclusão de
-    // produtos é ação exclusiva dele); o usuário normal entra só para
-    // confirmar que o resultado da ação do admin é visível no catálogo -
-    // por isso mora aqui, e não num arquivo à parte.
     const admUsuario = gerarUsuario({ administrador: "true" });
     cy.apiCriarUsuario(admUsuario);
 
@@ -69,7 +58,6 @@ describe("Jornada do administrador", () => {
     cy.get(admin.nav.logout).click();
     cy.location("pathname").should("eq", "/login");
 
-    // Usuário normal confirma que o catálogo reflete a mudança do admin
     const usuarioNormal = gerarUsuario();
     cy.apiCriarUsuario(usuarioNormal);
 
