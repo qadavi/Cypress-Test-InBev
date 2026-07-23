@@ -1,6 +1,6 @@
 # cypress-serverest
 
-Suíte Cypress para o [ServeRest](https://serverest.dev/): **UI** (8 testes, contra
+Suíte Cypress para o [ServeRest](https://serverest.dev/): **UI** (8 testes,
 [front.serverest.dev](https://front.serverest.dev/)) e **API** (19 testes).
 Cada camada tem 3 arquivos: jornada do usuário, jornada do admin, casos negativos.
 
