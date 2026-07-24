@@ -9,8 +9,14 @@ describe("Jornada do usuário normal", () => {
 
     cy.preencherCadastro(usuario);
 
-    // ServeRest loga automaticamente após o cadastro e redireciona para a Home
+    // Cadastro autentica (token salvo) mas não redireciona mais para a Home
+    // sozinho - comportamento confirmado manualmente. O token é salvo de
+    // forma assíncrona após a mensagem de sucesso aparecer, então esperamos
+    // ele existir antes de navegar (senão a rota /home ainda barra e volta
+    // para /login).
     cy.contains(/Cadastro realizado com sucesso/i).should("be.visible");
+    cy.window().its("localStorage").invoke("getItem", "serverest/userToken").should("exist");
+    cy.visit("/home");
     cy.location("pathname").should("eq", "/home");
 
     // Produto real via API em vez de nome fixo: catálogo compartilhado pode mudar
