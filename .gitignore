@@ -4,4 +4,3 @@ cypress/screenshots/
 cypress/downloads/
 cypress/reports/
 .env
-.claude/
